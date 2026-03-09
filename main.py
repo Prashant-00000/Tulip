@@ -732,24 +732,18 @@ class MathAIEngine:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  NEW — OCR / IMAGE SCAN HELPER                                      ║
+# ║  OCR / IMAGE SCAN HELPER                                            ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 def ocr_extract_text(image) -> str:
-    """Extract math text from image using pytesseract OCR."""
     try:
         from PIL import Image
         import PIL.ImageEnhance as enhance
         import pytesseract
-
-        # Convert to grayscale
-        gray = image.convert("L")
-        # Enhance contrast and sharpness for better OCR
+        gray      = image.convert("L")
         contrast  = enhance.Contrast(gray).enhance(2.0)
         sharpened = enhance.Sharpness(contrast).enhance(2.0)
-        # Run OCR
         text = pytesseract.image_to_string(sharpened, config='--psm 6').strip()
-        # Clean up
         text = ' '.join(text.replace('\n', ' ').split())
         return text
     except ImportError:
@@ -830,14 +824,12 @@ def run_streamlit_app():
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Session state ─────────────────────────────────────────────────
     for k, v in [("session_id", str(uuid.uuid4())[:8]), ("messages", []),
                  ("engine", None), ("kb_ready", False),
                  ("query_count", 0), ("pending", None)]:
         if k not in st.session_state:
             st.session_state[k] = v
 
-    # ── Sidebar ───────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("## ∫ Math Assistant")
         st.markdown(f"<small style='color:#8892b0'>Session `{st.session_state.session_id}`</small>",
@@ -886,17 +878,13 @@ def run_streamlit_app():
                       sym.try_solve(sym_in))
             st.success(result) if result else st.warning("Could not compute symbolically")
 
-        # ══════════════════════════════════════════════════════════════
-        # NEW ── PDF Upload
-        # ══════════════════════════════════════════════════════════════
+        # ── PDF Upload ────────────────────────────────────────────────
         st.divider()
         st.markdown("**📄 Upload PDF**")
         st.caption("Upload textbook, notes or question paper")
         uploaded_pdf = st.file_uploader(
-            "Choose PDF file",
-            type=["pdf"],
-            label_visibility="collapsed"
-        )
+            "Choose PDF file", type=["pdf"], label_visibility="collapsed")
+
         if uploaded_pdf is not None:
             tmp_path = f"temp_{uploaded_pdf.name}"
             with open(tmp_path, "wb") as f:
@@ -909,18 +897,26 @@ def run_streamlit_app():
                     if st.session_state.engine and chunks:
                         st.session_state.engine.vector_store.add_documents(chunks)
                         st.success(f"✅ Loaded {len(pdf_docs)} page(s) from PDF!")
+                        # ── NEW: PDF action buttons ───────────────────
+                        st.markdown("**Ask about this PDF:**")
+                        if st.button("📝 Solve all problems in this PDF", use_container_width=True, type="primary"):
+                            st.session_state.pending = "Solve all the math problems from the uploaded PDF step by step"
+                            st.rerun()
+                        if st.button("📋 Summarize this PDF", use_container_width=True):
+                            st.session_state.pending = "Summarize the key math concepts from the uploaded PDF"
+                            st.rerun()
+                        if st.button("❓ What topics are in this PDF?", use_container_width=True):
+                            st.session_state.pending = "What math topics are covered in the uploaded PDF?"
+                            st.rerun()
                     else:
                         st.warning("⚠️ No content found in PDF")
                 except Exception as e:
                     st.error(f"PDF error: {e}")
                 finally:
-                    # Clean up temp file
                     if os.path.exists(tmp_path):
                         os.remove(tmp_path)
 
-        # ══════════════════════════════════════════════════════════════
-        # NEW ── Camera Scan / Image Upload
-        # ══════════════════════════════════════════════════════════════
+        # ── Camera / Image Scan ───────────────────────────────────────
         st.divider()
         st.markdown("**📷 Scan Math Problem**")
         st.caption("Snap or upload a photo of any math problem")
@@ -929,30 +925,23 @@ def run_streamlit_app():
             "Choose input:",
             ["📷 Use Camera", "🖼️ Upload Image"],
             horizontal=True,
-            label_visibility="collapsed"
-        )
+            label_visibility="collapsed")
 
         scanned_image = None
-
         if scan_method == "📷 Use Camera":
             scanned_image = st.camera_input(
-                "Point at math problem and capture",
-                label_visibility="collapsed"
-            )
+                "Point at math problem and capture", label_visibility="collapsed")
         else:
             scanned_image = st.file_uploader(
                 "Upload photo of math problem",
                 type=["png", "jpg", "jpeg", "webp"],
                 label_visibility="collapsed",
-                key="img_uploader"
-            )
+                key="img_uploader")
 
         if scanned_image is not None:
             try:
                 from PIL import Image as PILImage
                 image = PILImage.open(scanned_image)
-
-                # Show preview of uploaded image
                 st.image(image, caption="📸 Captured Image", use_column_width=True)
 
                 with st.spinner("🔍 Reading math problem from image..."):
@@ -960,37 +949,49 @@ def run_streamlit_app():
 
                 if extracted == "ERROR_NO_PYTESSERACT":
                     st.error("❌ pytesseract not installed!")
-                    st.code("pip install pytesseract pillow\nbrew install tesseract  # Mac\nsudo apt install tesseract-ocr  # Linux")
+                    st.code("pip install pytesseract pillow\nbrew install tesseract")
 
                 elif extracted:
                     st.success("✅ Problem detected!")
                     st.info(f"📝 **Detected text:** {extracted}")
 
-                    # Solve directly
-                    if st.button("🧮 Solve This Problem", use_container_width=True, type="primary"):
-                        st.session_state.pending = extracted
-                        st.rerun()
-
-                    # Edit then solve
-                    st.markdown("<small style='color:#8892b0'>✏️ Edit if OCR made a mistake:</small>", unsafe_allow_html=True)
+                    # ── Edit box — in case OCR made a mistake ─────────
+                    st.markdown("<small style='color:#8892b0'>✏️ Edit if OCR made a mistake, then choose action:</small>",
+                                unsafe_allow_html=True)
                     edited = st.text_input(
-                        "Edit detected text:",
-                        value=extracted,
-                        label_visibility="collapsed"
-                    )
-                    if st.button("✅ Solve Edited Version", use_container_width=True):
-                        st.session_state.pending = edited
+                        "Edit detected text:", value=extracted, label_visibility="collapsed")
+
+                    # ── Action buttons ────────────────────────────────
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button("🧮 Solve", use_container_width=True, type="primary"):
+                            st.session_state.pending = f"Solve this math problem step by step: {edited}"
+                            st.rerun()
+                        if st.button("📋 Summarize", use_container_width=True):
+                            st.session_state.pending = f"Summarize and explain this math problem: {edited}"
+                            st.rerun()
+                    with b2:
+                        if st.button("💡 Give Hint", use_container_width=True):
+                            st.session_state.pending = f"Give me a hint to solve: {edited}"
+                            st.rerun()
+                        if st.button("📊 Similar Examples", use_container_width=True):
+                            st.session_state.pending = f"Show me similar example problems like: {edited}"
+                            st.rerun()
+
+                    # ── AUTO SOLVE — fires immediately after OCR ──────
+                    if "last_scanned" not in st.session_state or st.session_state.last_scanned != extracted:
+                        st.session_state.last_scanned = extracted
+                        st.session_state.pending = f"Solve this math problem step by step: {extracted}"
                         st.rerun()
 
                 else:
-                    st.warning("⚠️ Could not read text. Try better lighting or type manually below.")
+                    st.warning("⚠️ Could not read text. Try better lighting or type manually.")
                     st.info("💡 Tips: Good lighting, flat surface, clear handwriting works best!")
 
             except ImportError:
                 st.error("❌ Pillow not installed. Run: pip install pillow")
             except Exception as e:
                 st.error(f"Scan error: {e}")
-                st.info("💡 Try a clearer image with better lighting")
 
         st.divider()
         c1, c2 = st.columns(2)
@@ -1003,11 +1004,9 @@ def run_streamlit_app():
                 st.session_state.engine.clear_memory()
             st.rerun()
 
-    # ── Header ────────────────────────────────────────────────────────
     st.markdown('<h1 class="main-h">Advanced Mathematics Assistant</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-h">Powered by LLaMA 3 × Groq × RAG Knowledge Base</p>', unsafe_allow_html=True)
 
-    # ── Init engine ───────────────────────────────────────────────────
     if st.session_state.engine is None:
         with st.spinner("🔧 Building knowledge base (first run only)..."):
             try:
@@ -1027,7 +1026,6 @@ def run_streamlit_app():
 
     st.divider()
 
-    # ── Welcome screen ────────────────────────────────────────────────
     if not st.session_state.messages:
         st.markdown("""
         <div style="text-align:center;padding:3rem 2rem;color:#8892b0">
@@ -1039,7 +1037,6 @@ def run_streamlit_app():
             <p style="font-size:.85rem">Use the sidebar for graphs, symbolic compute, PDF upload and camera scan.</p>
         </div>""", unsafe_allow_html=True)
 
-    # ── Chat history ──────────────────────────────────────────────────
     for i, msg in enumerate(st.session_state.messages):
         if msg["role"] == "user":
             st.markdown(
@@ -1053,13 +1050,11 @@ def run_streamlit_app():
                 unsafe_allow_html=True)
             st.markdown(msg["content"])
             st.divider()
-
             clean = re.sub(r'\$\$(.+?)\$\$', r'\1', msg["content"], flags=re.DOTALL)
             clean = re.sub(r'\$(.+?)\$', r'\1', clean)
             clean = re.sub(r'━+', '─────────────────', clean)
             with st.expander("📋 Copy plain text", expanded=False):
                 st.code(clean, language=None)
-
             if msg.get("sources"):
                 tags = "".join(
                     f'<span class="tag">📖 {s["topic"].replace("_", " ").title()}</span>'
@@ -1067,14 +1062,13 @@ def run_streamlit_app():
                 st.markdown(f'<div style="margin-bottom:8px">{tags}</div>',
                             unsafe_allow_html=True)
 
-    # ── Input area ────────────────────────────────────────────────────
     st.divider()
     col1, col2 = st.columns([5, 1])
     with col1:
         default    = st.session_state.get("pending") or ""
         user_input = st.text_area(
             "Question:", value=default, height=100,
-            placeholder="e.g., Solve x² - 5x + 6 = 0   or   Find the derivative of sin(x)·x²   or use 📷 camera scan!",
+            placeholder="e.g., Solve x² - 5x + 6 = 0   or   Find the derivative of sin(x)·x²",
             key="user_input", label_visibility="collapsed")
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -1101,7 +1095,7 @@ def run_streamlit_app():
         - **Type question** → click Ask ∫ for step-by-step solution
         - **📷 Camera** → snap photo of handwritten problem → auto solves!
         - **🖼️ Upload Image** → upload screenshot or photo of any problem
-        - **📄 PDF Upload** → upload textbook or notes → ask questions from it
+        - **📄 PDF Upload** → upload textbook or notes → 3 action buttons appear!
         - **Graph**: Type `x**2, sin(x)` in sidebar Graph Plotter
         - **Symbolic**: Use ⚡ Compute for instant derivatives/integrals
         - **Copy**: Click 📋 Copy plain text below any answer
@@ -1234,10 +1228,6 @@ def run_evaluation():
     print(f"  Symbolic engine: {passed}/{len(sym_tests)} tests passed")
 
 
-# ╔══════════════════════════════════════════════════════════════════════╗
-# ║  ENTRY POINT                                                         ║
-# ╚══════════════════════════════════════════════════════════════════════╝
-
 def main():
     if any("streamlit" in arg for arg in sys.argv):
         run_streamlit_app()
@@ -1262,11 +1252,6 @@ def main():
     else:
         print("\nTo launch the UI:\n")
         print("  python3.11 -m streamlit run main.py\n")
-        print("Other commands:")
-        print("  python3.11 main.py --setup    Build knowledge base")
-        print("  python3.11 main.py --rebuild  Rebuild knowledge base")
-        print("  python3.11 main.py --test     Run unit tests")
-        print("  python3.11 main.py --eval     Evaluate RAG pipeline\n")
 
 
 try:
