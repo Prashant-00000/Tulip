@@ -1,0 +1,34 @@
+# Core LangChain
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-groq>=0.1.0
+langchain-huggingface>=0.0.3
+
+# Vector DB
+chromadb>=0.4.0
+faiss-cpu>=1.7.4
+
+# Embeddings
+sentence-transformers>=2.2.0
+
+# Data processing
+unstructured>=0.10.0
+pypdf>=3.0.0
+
+# Database (memory)
+pymongo>=4.0.0
+motor>=3.0.0
+
+# UI
+streamlit>=1.32.0
+
+# Math
+sympy>=1.12
+numpy>=1.24.0
+matplotlib>=3.7.0
+scipy>=1.11.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0

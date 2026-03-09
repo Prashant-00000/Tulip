@@ -1,0 +1,15 @@
+.env
+*.env
+.env.local
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+chroma_db/
+faiss_index/
+.DS_Store
+.env.example.save
+.streamlit/
+*.log
+.cache/
+models/
