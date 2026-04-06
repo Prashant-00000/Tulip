@@ -1,0 +1,18 @@
+Discrete Mathematics:
+Combinatorics:
+- Permutations (ordered): P(n,r) = n! / (n-r)!
+- Combinations (unordered): C(n,r) = n! / (r!(n-r)!)
+- Pigeonhole Principle: n+1 objects in n boxes means at least one box has 2+ objects
+Graph Theory:
+- Euler path: visits every edge once (exists if 0 or 2 odd-degree vertices)
+- Hamiltonian path: visits every vertex once
+- Tree: connected graph with n-1 edges for n vertices
+- Degree sum = 2 * number of edges
+Number Theory:
+- GCD(a,b) via Euclidean algorithm: GCD(a,b) = GCD(b, a mod b)
+- LCM(a,b) = a*b / GCD(a,b)
+- Modular arithmetic: a congruent to b (mod n) means n divides (a-b)
+- Fermat's Little Theorem: a^(p-1) congruent to 1 (mod p) for prime p
+Logic:
+- De Morgan's: NOT(A AND B) = NOT(A) OR NOT(B)
+- De Morgan's: NOT(A OR B) = NOT(A) AND NOT(B)

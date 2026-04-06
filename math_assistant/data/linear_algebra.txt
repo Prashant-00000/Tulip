@@ -1,0 +1,18 @@
+Linear Algebra Essentials:
+Matrix Operations:
+- Matrix multiplication (A*B): row-by-column dot products
+- Transpose (A^T): flip rows and columns
+- Determinant of 2x2: det([[a,b],[c,d]]) = ad - bc
+- Inverse: A^(-1) exists iff det(A) != 0
+Eigenvalues and Eigenvectors:
+- Av = lambda*v  where lambda = eigenvalue, v = eigenvector
+- Find eigenvalues: det(A - lambda*I) = 0 (characteristic equation)
+- Eigenvectors: solve (A - lambda*I)v = 0
+Vector Spaces:
+- Span, basis, dimension
+- Linear independence: no vector is a combination of others
+- Rank-Nullity Theorem: rank(A) + nullity(A) = n (columns)
+Dot Product & Norms:
+- u dot v = |u||v|cos(theta)
+- ||v|| = sqrt(v1^2 + v2^2 + ... + vn^2)
+- Orthogonal: u dot v = 0
