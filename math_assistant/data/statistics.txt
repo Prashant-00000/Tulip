@@ -1,0 +1,18 @@
+Statistics & Probability:
+Descriptive Statistics:
+- Mean: mu = sum(x) / n
+- Variance: sigma^2 = sum((x - mu)^2) / n
+- Standard Deviation: sigma = sqrt(variance)
+- Median: middle value when sorted
+- Mode: most frequent value
+Probability Rules:
+- P(A union B) = P(A) + P(B) - P(A intersection B)
+- P(A | B) = P(A intersection B) / P(B)
+- Bayes Theorem: P(A|B) = P(B|A)*P(A) / P(B)
+- Independent events: P(A intersection B) = P(A) * P(B)
+Distributions:
+- Normal: bell curve, described by mu and sigma
+- Binomial: P(X=k) = C(n,k) * p^k * (1-p)^(n-k)
+- Poisson: P(X=k) = (lambda^k * e^(-lambda)) / k!
+Central Limit Theorem:
+Sample means approach normal distribution as n approaches infinity
